@@ -11,9 +11,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import csv
-sys.path.append("../..")
+sys.path.append("..")
 from BlazeposeDepthai_before_occlusion import BlazeposeDepthai
-from BlazeposeRenderer import BlazeposeRenderer
+from BlazeposeRendererModified import BlazeposeRenderer
 from mediapipe_utils import KEYPOINT_DICT
 from collections import Counter
 
@@ -115,9 +115,7 @@ while True:
         if all([right_shoulder is not None, left_shoulder is not None, 
                 left_hip is not None, right_hip is not None]):
 
-            # Draw the quadrilateral (green color)
-            #cv2.polylines(frame, [np.array(points)], isClosed=True, color=(0, 255, 0), thickness=2)
-            
+           
             # Determine the top-left corner of the rectangle (right shoulder)
             top_left = tuple(right_shoulder.astype(int))
 
@@ -132,13 +130,8 @@ while True:
                 bottom_right = (int(right_shoulder[0]), int(right_hip[1]))
 
             # cv2.rectangle(frame, top_left, bottom_right, (255, 255, 0), thickness=3)
-
-            # Print coordinate Before defining the ROI for debug
-            # print(f"Debugging Coordinates: top_left = {top_left}, bottom_right = {bottom_right}, frame shape = {frame.shape}")
-
             # Crop the ROI within the rectangle
             roi = frame[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
-
        
             # Check if the ROI is empty or invalid
             if roi.size > 0:
@@ -188,14 +181,14 @@ while True:
                 if occlusion < 1 and started_tracking:
                     # get the xyz
                     draw_xyz = True                   
-                    # print(f"Distance: X:{body.xyz[0]/10:3.0f} cm") 
-                    # print(f"Y:{body.xyz[1]/10:3.0f} cm")
-                    # print(f"Z:{body.xyz[2]/10:3.0f} cm")
-                    # distance_x = round(body.xyz[0] / 10, 3)
-                    # distance_y = round(body.xyz[1] / 10, 3)
-                    # distance_z = round(body.xyz[2] / 10, 3)
-                    # angle = degrees(atan2(body.xyz[0], body.xyz[2]))
-                    # print(f"angle: {angle} ")
+                    print(f"Distance: X:{body.xyz[0]/10:3.0f} cm") 
+                    print(f"Y:{body.xyz[1]/10:3.0f} cm")
+                    print(f"Z:{body.xyz[2]/10:3.0f} cm")
+                    distance_x = round(body.xyz[0] / 10, 3)
+                    distance_y = round(body.xyz[1] / 10, 3)
+                    distance_z = round(body.xyz[2] / 10, 3)
+                    angle = degrees(atan2(body.xyz[0], body.xyz[2]))
+                    print(f"angle: {angle} ")
                     try:
                         print(f"Distance: X:{body.xyz[0]/10:3.0f} cm")
                         print(f"Y:{body.xyz[1]/10:3.0f} cm")
@@ -216,27 +209,25 @@ while True:
                     # Initialize old_duty to track previous duty value
                     old_duty = duty
 
-                    # # Handle negative angles
-                    # if angle <= -20 and duty < 11:
-                    #     for threshold in reversed(angle_thresholds[:3]):
-                    #         if angle < threshold:
-                    #             duty += duty_delta
+                    # Handle negative angles
+                    if angle <= -20 and duty < 11:
+                        for threshold in reversed(angle_thresholds[:3]):
+                            if angle < threshold:
+                                duty += duty_delta
 
-                    # # Handle positive angles
-                    # elif angle >= 20 and duty > 3:
-                    #     for threshold in angle_thresholds[3:]:
-                    #         if angle > threshold:
-                    #             duty -= duty_delta
+                    # Handle positive angles
+                    elif angle >= 20 and duty > 3:
+                        for threshold in angle_thresholds[3:]:
+                            if angle > threshold:
+                                duty -= duty_delta
 
-                    # # Update the servo
-                    # if old_duty != duty:
-                    #     servo1.ChangeDutyCycle(duty)
-                    #     time.sleep(0.5)
-                    #     servo1.ChangeDutyCycle(0)
-                    #     servo_angle = (duty - 2.5) * 20
-                    #     print(f"Servo moved rotates to angle {servo_angle}")
-
-
+                    # Update the servo
+                    if old_duty != duty:
+                        servo1.ChangeDutyCycle(duty)
+                        time.sleep(0.5)
+                        servo1.ChangeDutyCycle(0)
+                        servo_angle = (duty - 2.5) * 20
+                        print(f"Servo moved rotates to angle {servo_angle}")
 
                 # Convert the average color to a web color name
                 def rgb_to_name(rgb_color):
@@ -252,11 +243,6 @@ while True:
 
                 # Get the closest color name for the average color
                 closest_color_name = rgb_to_name(average_color)
-
-                # Print and display the average color information
-                #print(f"average Color: B:{average_color[0]}, G:{average_color[1]}, R:{average_color[2]}")
-                #print(f"Closest Color: {closest_color_name}")
-                
                 message = f"{closest_color_name} shirt"
                 
                 # Calculate text size and position it in the middle of the trapezoid
@@ -272,18 +258,14 @@ while True:
             #print("One or more keypoints are missing.")
 
          # collect data:
-        
+     
         with open(csv_file_name, 'a', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow({'time': elapsed_time, 'x': distance_x, 'y': distance_y, 'z': distance_z, 
                             'angle_xz': angle, 'tag': apriltag_id, 'color': closest_color_name, 'rgb': average_color, 
                             'servo_angle': servo_angle})
 
-
-
-
     # Draw 2D skeleton
-
     frame = renderer.draw(frame, body, draw_xyz)
     key = renderer.waitKey(delay=1)
     if key == 27 or key == ord('q'):
