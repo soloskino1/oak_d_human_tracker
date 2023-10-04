@@ -35,6 +35,18 @@ def calc_avg_color(region):
     average_color = (average_color[2], average_color[1], average_color[0])
     return average_color
 
+# Function to Convert the average color to a web color name
+def rgb_to_name(rgb_color):
+    min_color_diff = float("inf")
+    closest_color = None
+    for key, name in webcolors.CSS3_HEX_TO_NAMES.items():
+        rgb = webcolors.hex_to_rgb(key)
+        color_diff = sum((c1 - c2) ** 2 for c1, c2 in zip(rgb_color, rgb))
+        if color_diff < min_color_diff:
+            min_color_diff = color_diff
+            closest_color = name
+    return closest_color
+
 # Function to start servo
 def initialize_servo():
     GPIO.setmode(GPIO.BOARD)
@@ -48,7 +60,6 @@ def initialize_servo():
     time.sleep(0.5)
     servo1.ChangeDutyCycle(0)
     return servo1, duty
-
 
 # Create CSV file
 with open(csv_file_name, 'w', newline='') as csvfile:
@@ -166,9 +177,7 @@ while True:
 
                 # Convert the average color to a tuple (B, G, R)
                 average_color = (average_color[2], average_color[1], average_color[0])
-
-                
-        
+ 
                 # If there is occlusion or not started tracking, check for tags
                 if occlusion >  0 or not started_tracking:
                     
@@ -204,14 +213,6 @@ while True:
                 if occlusion < 1 and started_tracking:
                     # get the xyz
                     draw_xyz = True                   
-                    print(f"Distance: X:{body.xyz[0]/10:3.0f} cm") 
-                    print(f"Y:{body.xyz[1]/10:3.0f} cm")
-                    print(f"Z:{body.xyz[2]/10:3.0f} cm")
-                    distance_x = round(body.xyz[0] / 10, 3)
-                    distance_y = round(body.xyz[1] / 10, 3)
-                    distance_z = round(body.xyz[2] / 10, 3)
-                    angle = degrees(atan2(body.xyz[0], body.xyz[2]))
-                    print(f"angle: {angle} ")
                     try:
                         print(f"Distance: X:{body.xyz[0]/10:3.0f} cm")
                         print(f"Y:{body.xyz[1]/10:3.0f} cm")
@@ -223,7 +224,6 @@ while True:
                         print(f"angle: {angle} ")
                     except AttributeError:
                         pass 
-
 
                     # Define angle thresholds and the duty increment/decrement value
                     angle_thresholds = [-45, -30, -15, 15, 30, 45]
@@ -243,7 +243,7 @@ while True:
                         for threshold in angle_thresholds[3:]:
                             if angle > threshold:
                                 duty -= duty_delta
-
+  
                     # Update the servo
                     if old_duty != duty:
                         servo1.ChangeDutyCycle(duty)
@@ -251,18 +251,6 @@ while True:
                         servo1.ChangeDutyCycle(0)
                         servo_angle = (duty - 2.5) * 20
                         print(f"Servo moved rotates to angle {servo_angle}")
-
-                # Convert the average color to a web color name
-                def rgb_to_name(rgb_color):
-                    min_color_diff = float("inf")
-                    closest_color = None
-                    for key, name in webcolors.CSS3_HEX_TO_NAMES.items():
-                        rgb = webcolors.hex_to_rgb(key)
-                        color_diff = sum((c1 - c2) ** 2 for c1, c2 in zip(rgb_color, rgb))
-                        if color_diff < min_color_diff:
-                            min_color_diff = color_diff
-                            closest_color = name
-                    return closest_color
 
                 # Get the closest color name for the average color
                 closest_color_name = rgb_to_name(average_color)
@@ -273,15 +261,14 @@ while True:
                 text_size = cv2.getTextSize(message, font, 1, 2)[0]
                 text_x = (roi.shape[1] - text_size[0]) // 2
                 text_y = (roi.shape[0] + text_size[1]) // 2
-                # cv2.putText(frame, message, (top_left[0] + text_x, top_left[1] + text_y), font, 1, (0, 0, 255), 2)
+                cv2.putText(frame, message, (top_left[0] + text_x, top_left[1] + text_y), font, 1, (0, 0, 255), 2)
             else:
                 # Handle the case when the ROI is empty or invalid
                 print("Invalid or Empty ROI")
         #else:
             #print("One or more keypoints are missing.")
 
-         # collect data:
-     
+         # collect data:     
         with open(csv_file_name, 'a', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow({'time': elapsed_time, 'x': distance_x, 'y': distance_y, 'z': distance_z, 
