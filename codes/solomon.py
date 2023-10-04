@@ -11,6 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import csv
+from mpl_toolkits.mplot3d import Axes3D
 sys.path.append("..")
 from BlazeposeDepthai_before_occlusion import BlazeposeDepthai
 from BlazeposeRendererModified import BlazeposeRenderer
@@ -93,7 +94,8 @@ apriltag_id = 'N/A'
 closest_color_name = 'N/A'
 average_color = (0, 0, 0)
 servo_angle = 0
-
+# array to store xyz values
+xyz_values = []
 occlusion = 0
 
 # Initialize the servo
@@ -233,13 +235,13 @@ while True:
                     old_duty = duty
 
                     # Handle negative angles
-                    if angle <= -20 and duty < 11:
+                    if angle <= -15 and duty < 11:
                         for threshold in reversed(angle_thresholds[:3]):
                             if angle < threshold:
                                 duty += duty_delta
 
                     # Handle positive angles
-                    elif angle >= 20 and duty > 3:
+                    elif angle >= 15 and duty > 3:
                         for threshold in angle_thresholds[3:]:
                             if angle > threshold:
                                 duty -= duty_delta
@@ -267,7 +269,8 @@ while True:
                 print("Invalid or Empty ROI")
         #else:
             #print("One or more keypoints are missing.")
-
+        # Store the xyz values
+        xyz_values.append([distance_x, distance_y, distance_z])
          # collect data:     
         with open(csv_file_name, 'a', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -284,6 +287,18 @@ while True:
         servo1.stop()
         GPIO.cleanup()
 
+        # for 3d graph
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        xyz_values = np.array(xyz_values)
+        # ax.scatter(xyz_values[:, 0], xyz_values[:, 1], xyz_values[:, 2])
+        # plt.show()
+
+        # # Create a new figure
+        # fig = plt.figure()
+        # Line plot
+        ax.plot(xyz_values[:, 0], xyz_values[:, 1], xyz_values[:, 2])
+        plt.show()
         # # Load your data
         # df = pd.read_csv(csv_file_name)
 
