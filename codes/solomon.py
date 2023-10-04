@@ -28,24 +28,34 @@ def generate_filename(base_name):
 # Generate filename
 csv_file_name = generate_filename("data")
 
+# Function to calculate the average color of a region
+def calc_avg_color(region):
+    pixels = region.reshape(-1, 3)
+    average_color = np.uint8(pixels).mean(axis=0)
+    average_color = (average_color[2], average_color[1], average_color[0])
+    return average_color
+
+# Function to start servo
+def initialize_servo():
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.cleanup()
+    GPIO.setup(11, GPIO.OUT)
+    servo1 = GPIO.PWM(11, 50) # pin 11 for servo1, pulse 50Hz
+    servo1.start(0) # Start PWM running, with value of 0 (pulse off)
+    time.sleep(0.5)
+    duty = 7
+    servo1.ChangeDutyCycle(duty)
+    time.sleep(0.5)
+    servo1.ChangeDutyCycle(0)
+    return servo1, duty
+
+
 # Create CSV file
 with open(csv_file_name, 'w', newline='') as csvfile:
     fieldnames = ['time', 'x', 'y', 'z', 'angle_xz', 'tag', 'color', 'rgb', 'servo_angle']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
 
-start_time = 0
-started_tracking = False
-elapsed_time  = 0
-
-distance_x, distance_y,distance_z = 0, 0, 0
-angle = 0
-apriltag_id = 'N/A'
-closest_color_name = 'N/A'
-average_color = (0, 0, 0)
-servo_angle = 0
-
-occlusion = 0
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--model", type=str, choices=['full', 'lite', '831'], default='full',
                         help="Landmark model to use (default=%(default)s")
@@ -61,18 +71,19 @@ parser.add_argument('-t', '--trace', action="store_true",
                     help="Print some debug messages")
 args = parser.parse_args()  
 
-def initialize_servo():
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.cleanup()
-    GPIO.setup(11, GPIO.OUT)
-    servo1 = GPIO.PWM(11, 50) # pin 11 for servo1, pulse 50Hz
-    servo1.start(0) # Start PWM running, with value of 0 (pulse off)
-    time.sleep(0.5)
-    duty = 7
-    servo1.ChangeDutyCycle(duty)
-    time.sleep(0.5)
-    servo1.ChangeDutyCycle(0)
-    return servo1, duty
+# Initializing variables
+start_time = 0
+started_tracking = False
+elapsed_time  = 0
+
+distance_x, distance_y,distance_z = 0, 0, 0
+angle = 0
+apriltag_id = 'N/A'
+closest_color_name = 'N/A'
+average_color = (0, 0, 0)
+servo_angle = 0
+
+occlusion = 0
 
 # Initialize the servo
 servo1, duty = initialize_servo()
@@ -111,11 +122,9 @@ while True:
         # the points
         # print(f"Debugging Landmarks: right_shoulder = {points[0]}, left_shoulder = {points[1]}, left_hip = {points[2]}, right_hip = {points[3]}")
 
-
         if all([right_shoulder is not None, left_shoulder is not None, 
                 left_hip is not None, right_hip is not None]):
-
-           
+          
             # Determine the top-left corner of the rectangle (right shoulder)
             top_left = tuple(right_shoulder.astype(int))
 
@@ -132,13 +141,27 @@ while True:
             # cv2.rectangle(frame, top_left, bottom_right, (255, 255, 0), thickness=3)
             # Crop the ROI within the rectangle
             roi = frame[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
-       
+
             # Check if the ROI is empty or invalid
             if roi.size > 0:
                 gray_cropped_img = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+                h, w, _ = roi.shape
+                mid_h, mid_w = h // 2, w // 2
+
+                # Divide the ROI into 4 parts
+                roi1 = roi[:mid_h, :mid_w]
+                roi2 = roi[:mid_h, mid_w:]
+                roi3 = roi[mid_h:, :mid_w]
+                roi4 = roi[mid_h:, mid_w:]
+                average_color = calc_avg_color(roi)
+                avg_color1 = calc_avg_color(roi1)
+                avg_color2 = calc_avg_color(roi2)
+                avg_color3 = calc_avg_color(roi3)
+                avg_color4 = calc_avg_color(roi4)
+
                 # Reshape the ROI into an array of pixel values
                 pixels = roi.reshape(-1, 3)
-                # Calculate the mode (most frequent color) in the ROI
+                # Calculate the mean in the ROI
                 average_color = np.uint8(pixels).mean(axis=0)
 
                 # Convert the average color to a tuple (B, G, R)
