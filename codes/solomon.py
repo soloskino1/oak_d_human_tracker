@@ -13,7 +13,7 @@ import os
 import csv
 from mpl_toolkits.mplot3d import Axes3D
 sys.path.append("..")
-from BlazeposeDepthai_before_occlusion import BlazeposeDepthai
+from BlazeposeDepthaiEdgeModified import BlazeposeDepthai
 from BlazeposeRendererModified import BlazeposeRenderer
 from mediapipe_utils import KEYPOINT_DICT
 from collections import Counter
@@ -29,7 +29,7 @@ def generate_filename(base_name):
 # Generate filename
 csv_file_name = generate_filename("data")
 
-# Function to calculate the average color of a region
+# Function to calculate the average color of a region and outputs the rgb value
 def calc_avg_color(region):
     pixels = region.reshape(-1, 3)
     average_color = np.uint8(pixels).mean(axis=0)
@@ -172,14 +172,6 @@ while True:
                 avg_color3 = calc_avg_color(roi3)
                 avg_color4 = calc_avg_color(roi4)
 
-                # Reshape the ROI into an array of pixel values
-                pixels = roi.reshape(-1, 3)
-                # Calculate the mean in the ROI
-                average_color = np.uint8(pixels).mean(axis=0)
-
-                # Convert the average color to a tuple (B, G, R)
-                average_color = (average_color[2], average_color[1], average_color[0])
- 
                 # If there is occlusion or not started tracking, check for tags
                 if occlusion >  0 or not started_tracking:
                     
