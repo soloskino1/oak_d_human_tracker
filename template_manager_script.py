@@ -155,20 +155,62 @@ while True:
         ${_IF_XYZ}
         # Choosing the reference point: mid hips if hips visible, or mid shoulders otherwise
         # xyz_ref codes the reference point, 1 if mid hips, 2 if mid shoulders, 0 if no reference point
-        if is_visible(right_hip) and is_visible(left_hip):      
-            kp1 = right_hip
+        # if is_visible(right_hip) and is_visible(left_hip):      
+        #     kp1 = right_hip
+        #     kp2 = left_hip
+        #     rrn_xyz_ref_x = (lms[5*kp1] + lms[5*kp2]) / 512 # 512 = 256*2 (256 for normalizing, 2 for the mean)
+        #     rrn_xyz_ref_y = (lms[5*kp1+1] + lms[5*kp2+1]) / 512
+        #     sqn_xyz_ref_x, sqn_xyz_ref_y = rr2img(rrn_xyz_ref_x, rrn_xyz_ref_y) 
+        #     half_zone_size = max(int(sqn_rr_size * ${_frame_size} / 90), 4)
+        #     xc = filter_x.apply(sqn_xyz_ref_x * ${_frame_size} + ${_crop_w})
+        #     yc = filter_y.apply(sqn_xyz_ref_y * ${_frame_size} - ${_pad_h})
+        #     roi_left = max(0, xc - half_zone_size)
+        #     roi_right = min(${_img_w}-1, xc + half_zone_size)   
+        #     roi_top = max(0, yc - half_zone_size)
+        #     roi_bottom = min(${_img_h}-1, yc + half_zone_size)
+        #     if is_in_image(sqn_xyz_ref_x, sqn_xyz_ref_y):
+        #         xyz_ref = 1
+
+
+        if is_visible(right_hip) and is_visible(left_hip) and is_visible(right_shoulder) and is_visible(left_shoulder):
+            # For roi_left and roi_top, use right_shoulder
+            kp1 = right_shoulder
+            rrn_xyz_ref_x, rrn_xyz_ref_y = (lms[5*kp1] / 256, lms[5*kp1+1] / 256) 
+            sqn_xyz_ref_x, sqn_xyz_ref_y = rr2img(rrn_xyz_ref_x, rrn_xyz_ref_y)
+            half_zone_size = max(int(sqn_rr_size * ${_frame_size} / 90), 4)
+            xc = filter_x.apply(sqn_xyz_ref_x * ${_frame_size} + ${_crop_w})
+            yc = filter_y.apply(sqn_xyz_ref_y * ${_frame_size} - ${_pad_h})
+            roi_left = max(0, xc - half_zone_size)
+            roi_top = max(0, yc - half_zone_size)
+
+            # For roi_right and roi_bottom, use left_shoulder and left_hip
+            kp1 = left_shoulder
             kp2 = left_hip
-            rrn_xyz_ref_x = (lms[5*kp1] + lms[5*kp2]) / 512 # 512 = 256*2 (256 for normalizing, 2 for the mean)
-            rrn_xyz_ref_y = (lms[5*kp1+1] + lms[5*kp2+1]) / 512
-            sqn_xyz_ref_x, sqn_xyz_ref_y = rr2img(rrn_xyz_ref_x, rrn_xyz_ref_y) 
-            if is_in_image(sqn_xyz_ref_x, sqn_xyz_ref_y):
-                xyz_ref = 1
+            rrn_xyz_ref_x, rrn_xyz_ref_y = (lms[5*kp1] / 256, lms[5*kp1+1] / 256) 
+            rrn_xyz_ref_x2, rrn_xyz_ref_y2 = (lms[5*kp2] / 256, lms[5*kp2+1] / 256) 
+            sqn_xyz_ref_x, sqn_xyz_ref_y = rr2img(rrn_xyz_ref_x, rrn_xyz_ref_y)
+            sqn_xyz_ref_x2, sqn_xyz_ref_y2 = rr2img(rrn_xyz_ref_x2, rrn_xyz_ref_y2)
+            half_zone_size = max(int(sqn_rr_size * ${_frame_size} / 90), 4)
+            xc = filter_x.apply(sqn_xyz_ref_x * ${_frame_size} + ${_crop_w})
+            yc = filter_y.apply(sqn_xyz_ref_y2 * ${_frame_size} - ${_pad_h})  # Using y from left_hip for roi_bottom
+            roi_right = min(${_img_w}-1, xc + half_zone_size)
+            roi_bottom = min(${_img_h}-1, yc + half_zone_size)
+            xyz_ref = 1  
+
+
         if xyz_ref == 0 and is_visible(right_shoulder) and is_visible(left_shoulder):
             kp1 = right_shoulder
             kp2 = left_shoulder
             rrn_xyz_ref_x = (lms[5*kp1] + lms[5*kp2]) / 512 # 512 = 256*2 (256 for normalizing, 2 for the mean)
             rrn_xyz_ref_y = (lms[5*kp1+1] + lms[5*kp2+1]) / 512
             sqn_xyz_ref_x, sqn_xyz_ref_y = rr2img(rrn_xyz_ref_x, rrn_xyz_ref_y) 
+            half_zone_size = max(int(sqn_rr_size * ${_frame_size} / 90), 4)
+            xc = filter_x.apply(sqn_xyz_ref_x * ${_frame_size} + ${_crop_w})
+            yc = filter_y.apply(sqn_xyz_ref_y * ${_frame_size} - ${_pad_h})
+            roi_left = max(0, xc - half_zone_size)
+            roi_right = min(${_img_w}-1, xc + half_zone_size)   
+            roi_top = max(0, yc - half_zone_size)
+            roi_bottom = min(${_img_h}-1, yc + half_zone_size)
             if is_in_image(sqn_xyz_ref_x, sqn_xyz_ref_y):
                 xyz_ref = 2
         if xyz_ref:
@@ -176,13 +218,6 @@ while True:
             conf_data = SpatialLocationCalculatorConfigData()
             conf_data.depthThresholds.lowerThreshold = 100
             conf_data.depthThresholds.upperThreshold = 10000
-            half_zone_size = max(int(sqn_rr_size * ${_frame_size} / 90), 4)
-            xc = filter_x.apply(sqn_xyz_ref_x * ${_frame_size} + ${_crop_w})
-            yc = filter_y.apply(sqn_xyz_ref_y * ${_frame_size} - ${_pad_h})
-            roi_left = max(0, xc - half_zone_size)
-            roi_right = min(${_img_w}-1, xc + half_zone_size)
-            roi_top = max(0, yc - half_zone_size)
-            roi_bottom = min(${_img_h}-1, yc + half_zone_size)
             roi_topleft = Point2f(roi_left, roi_top)
             roi_bottomright = Point2f(roi_right, roi_bottom)
             conf_data.roi = Rect(roi_topleft, roi_bottomright)
