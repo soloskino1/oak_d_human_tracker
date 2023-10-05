@@ -18,7 +18,7 @@ class BlazeposeDepthai:
                 pd_model=None, 
                 pd_score_thresh=0.5,
                 lm_model=None,
-                lm_score_thresh=0.7,
+                lm_score_thresh=0.4,
                 xyz=True,
                 crop=False,
                 smoothing= True,
