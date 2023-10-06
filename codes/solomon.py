@@ -13,7 +13,7 @@ import os
 import csv
 from mpl_toolkits.mplot3d import Axes3D
 sys.path.append("..")
-from BlazeposeDepthaiEdgeModified import BlazeposeDepthai
+from BlazeposeDepthai import BlazeposeDepthai
 from BlazeposeRendererModified import BlazeposeRenderer
 from mediapipe_utils import KEYPOINT_DICT
 from collections import Counter
@@ -85,8 +85,6 @@ parser.add_argument('-s', '--stats', action="store_true",
                     help="Print some statistics at exit")
 parser.add_argument('-t', '--trace', action="store_true", 
                     help="Print some debug messages")
-parser.add_argument("-o","--output",
-                    help="Path to output video file")
 args = parser.parse_args()  
 
 # Initializing variables
