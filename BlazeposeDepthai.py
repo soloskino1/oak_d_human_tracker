@@ -416,6 +416,7 @@ class BlazeposeDepthai:
                     body.rect_points[i][0] -= self.pad_w
     def next_frame(self, occlusion, started_tracking):
         self.fps.update()
+        fpsvalue = self.fps.get()
         if self.input_type == "rgb":
             in_video = self.q_video.get()
             video_frame = in_video.getCvFrame()
@@ -472,10 +473,9 @@ class BlazeposeDepthai:
                 self.filter_landmarks_aux.reset()
                 self.filter_landmarks_world.reset()
                 if self.xyz: self.filter_xyz.reset()
-        return video_frame, body, occlusion
+        return video_frame, body, occlusion, fpsvalue
     def exit(self):
         self.device.close()
-
         # Print some stats
         if self.stats:
             print(f"FPS : {self.fps.get_global():.1f} f/s (# frames = {self.fps.nbf})")

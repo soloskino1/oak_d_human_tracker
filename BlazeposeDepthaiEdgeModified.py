@@ -431,7 +431,8 @@ class BlazeposeDepthai:
                 
     def next_frame(self, occlusion, started_tracking):
         self.fps.update()
-            
+        fpsvalue = self.fps.get()
+
         if self.laconic:
             video_frame = np.zeros((self.frame_size, self.frame_size, 3), dtype=np.uint8)
         else:
@@ -498,7 +499,7 @@ class BlazeposeDepthai:
                     self.nb_lm_inferences_after_landmarks_ROI += 1
                 if res["lm_score"] < self.lm_score_thresh: self.nb_frames_no_body += 1
 
-        return video_frame, body, occlusion
+        return video_frame, body, occlusion, fpsvalue
 
 
     def exit(self):

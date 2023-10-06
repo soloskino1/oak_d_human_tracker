@@ -64,7 +64,7 @@ def initialize_servo():
 
 # Create CSV file
 with open(csv_file_name, 'w', newline='') as csvfile:
-    fieldnames = ['time', 'x', 'y', 'z', 'angle_xz', 'tag', 'color', 'rgb', 'servo_angle']
+    fieldnames = ['time', 'x', 'y', 'z', 'angle_xz', 'tag', 'color', 'rgb', 'rgb1', 'rgb2', 'rgb3', 'rgb4',  'servo_angle', 'occlusion', 'lm_score']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
 
@@ -93,10 +93,11 @@ angle = 0
 apriltag_id = 'N/A'
 closest_color_name = 'N/A'
 average_color = (0, 0, 0)
-servo_angle = 0
+servo_angle = 90
 # array to store xyz values
 xyz_values = []
 occlusion = 0
+fpsvalue = 0
 
 # Initialize the servo
 servo1, duty = initialize_servo()
@@ -107,7 +108,7 @@ detector = apriltag.Detector()
 draw_xyz = False
 while True:
     # Run blazepose on the nexray_framet frame
-    frame, body, occlusion = pose.next_frame(occlusion, started_tracking)
+    frame, body, occlusion, fpsvalue = pose.next_frame(occlusion, started_tracking)
     if frame is None:
         break
 
@@ -117,7 +118,7 @@ while True:
     left_hip = None
     right_hip = None
     if body:
-        print(f"Landmark score = {body.lm_score}")
+        lm_score = body.lm_score
         if started_tracking:
             elapsed_time = time.time() - start_time
             print(f"time: {elapsed_time}")
@@ -261,14 +262,18 @@ while True:
                 print("Invalid or Empty ROI")
         #else:
             #print("One or more keypoints are missing.")
-        # Store the xyz values
-        xyz_values.append([distance_x, distance_y, distance_z])
-         # collect data:     
-        with open(csv_file_name, 'a', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writerow({'time': elapsed_time, 'x': distance_x, 'y': distance_y, 'z': distance_z, 
-                            'angle_xz': angle, 'tag': apriltag_id, 'color': closest_color_name, 'rgb': average_color, 
-                            'servo_angle': servo_angle})
+        # # Store the xyz values
+        # xyz_values.append([distance_x, distance_y, distance_z])
+    else:
+        lm_score = 0
+    print(f"Landmark score = {lm_score}")
+    # collect data:     
+    with open(csv_file_name, 'a', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writerow({'time': elapsed_time, 'x': distance_x, 'y': distance_y, 'z': distance_z, 
+                        'angle_xz': angle, 'tag': apriltag_id, 'color': closest_color_name, 'rgb': average_color, 'rgb1': avg_color1, 
+                        'rgb2': avg_color2, 'rgb3': avg_color3, 'rgb4': avg_color4, 'servo_angle': servo_angle, 'occlusion': occlusion, 'lm_score': lm_score})
+
 
     # Draw 2D skeleton
     frame = renderer.draw(frame, body, draw_xyz)
@@ -279,18 +284,18 @@ while True:
         servo1.stop()
         GPIO.cleanup()
 
-        # for 3d graph
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        xyz_values = np.array(xyz_values)
-        # ax.scatter(xyz_values[:, 0], xyz_values[:, 1], xyz_values[:, 2])
-        # plt.show()
-
-        # # Create a new figure
+        # # for 3d graph
         # fig = plt.figure()
-        # Line plot
-        ax.plot(xyz_values[:, 0], xyz_values[:, 1], xyz_values[:, 2])
-        plt.show()
+        # ax = fig.add_subplot(111, projection='3d')
+        # xyz_values = np.array(xyz_values)
+        # # ax.scatter(xyz_values[:, 0], xyz_values[:, 1], xyz_values[:, 2])
+        # # plt.show()
+
+        # # # Create a new figure
+        # # fig = plt.figure()
+        # # Line plot
+        # ax.plot(xyz_values[:, 0], xyz_values[:, 1], xyz_values[:, 2])
+        # plt.show()
         # # Load your data
         # df = pd.read_csv(csv_file_name)
 
