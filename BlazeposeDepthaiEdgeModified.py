@@ -463,9 +463,7 @@ class BlazeposeDepthai:
             if self.xyz:
                 if res['xyz_ref'] == 0:
                     body.xyz_ref = None
-                    if started_tracking:
-                        occlusion += 1
-                        print(f"occlusion: {occlusion}")
+                    
                 else:
                     if res['xyz_ref'] == 1:
                         body.xyz_ref = "mid_hips"
@@ -480,6 +478,9 @@ class BlazeposeDepthai:
 
         else:
             body = None
+            if started_tracking:
+                occlusion += 1
+                print(f"Alerting user, occlusion: {occlusion}")
             if self.smoothing: 
                 self.filter_landmarks.reset()
                 self.filter_landmarks_aux.reset()
