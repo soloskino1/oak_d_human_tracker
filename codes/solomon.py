@@ -75,12 +75,18 @@ parser.add_argument('-i', '--input', type=str, default='rgb',
                     help="'rgb' or 'rgb_laconic' or path to video/image file to use as input (default: %(default)s)")  
 parser.add_argument("-o","--output",
                     help="Path to output video file")
+parser.add_argument("--lm_m", type=str,
+                help="Landmark model ('full' or 'lite' or 'heavy') or path to an .blob file")
+parser.add_argument('-f', '--internal_fps', type=int, 
+                    help="Fps of internal color camera. Too high value lower NN fps (default= depends on the model)")    
 parser.add_argument('-xyz', '--xyz', action="store_true", 
                     help="Get (x,y,z) coords of reference body keypoint in camera coord system (only for compatible devices)")
 parser.add_argument('-s', '--stats', action="store_true", 
                     help="Print some statistics at exit")
 parser.add_argument('-t', '--trace', action="store_true", 
                     help="Print some debug messages")
+parser.add_argument("-o","--output",
+                    help="Path to output video file")
 args = parser.parse_args()  
 
 # Initializing variables
@@ -107,7 +113,7 @@ fpsvalue = 0
 
 # Initialize the servo
 servo1, duty = initialize_servo()
-pose = BlazeposeDepthai(input_src=args.input, lm_model=args.model,xyz=args.xyz)
+pose = BlazeposeDepthai(input_src=args.input, lm_model=args.lm_m,xyz=args.xyz)
 renderer = BlazeposeRenderer(pose, output=args.output)
 detector = apriltag.Detector()
 
