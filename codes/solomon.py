@@ -64,7 +64,7 @@ def initialize_servo():
 
 # Create CSV file
 with open(csv_file_name, 'w', newline='') as csvfile:
-    fieldnames = ['time', 'x', 'y', 'z', 'angle_xz', 'tag', 'color', 'rgb', 'rgb1', 'rgb2', 'rgb3', 'rgb4',  'servo_angle', 'occlusion', 'lm_score']
+    fieldnames = ['time', 'x', 'y', 'z', 'angle_xz', 'tag', 'color', 'rgb', 'rgb1', 'rgb2', 'rgb3', 'rgb4',  'servo_angle', 'occlusion', 'lm_score', 'fpsvalue']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
 
@@ -93,6 +93,12 @@ angle = 0
 apriltag_id = 'N/A'
 closest_color_name = 'N/A'
 average_color = (0, 0, 0)
+avg_color1 = (0, 0, 0)
+avg_color2 = (0, 0, 0)
+avg_color3 = (0, 0, 0)
+avg_color4 = (0, 0, 0)
+
+
 servo_angle = 90
 # array to store xyz values
 xyz_values = []
@@ -272,7 +278,7 @@ while True:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writerow({'time': elapsed_time, 'x': distance_x, 'y': distance_y, 'z': distance_z, 
                         'angle_xz': angle, 'tag': apriltag_id, 'color': closest_color_name, 'rgb': average_color, 'rgb1': avg_color1, 
-                        'rgb2': avg_color2, 'rgb3': avg_color3, 'rgb4': avg_color4, 'servo_angle': servo_angle, 'occlusion': occlusion, 'lm_score': lm_score})
+                        'rgb2': avg_color2, 'rgb3': avg_color3, 'rgb4': avg_color4, 'servo_angle': servo_angle, 'occlusion': occlusion, 'lm_score': lm_score, 'fpsvalue': fpsvalue})
 
 
     # Draw 2D skeleton
