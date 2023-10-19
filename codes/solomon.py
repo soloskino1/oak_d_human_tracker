@@ -13,7 +13,7 @@ import os
 import csv
 from mpl_toolkits.mplot3d import Axes3D
 sys.path.append("..")
-from BlazeposeDepthai import BlazeposeDepthai
+from BlazeposeDepthaiEdgeModified import BlazeposeDepthai
 from BlazeposeRendererModified import BlazeposeRenderer
 from mediapipe_utils import KEYPOINT_DICT
 from collections import Counter

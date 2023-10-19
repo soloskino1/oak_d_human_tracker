@@ -454,7 +454,7 @@ class BlazeposeDepthai:
                 body = None
                 if started_tracking:
                     occlusion += 1
-                    print(f"occlusion: {occlusion}")
+                    print(f"Alerting user, occlusion: {occlusion}")
                 self.use_previous_landmarks = False
                 if self.smoothing: 
                     self.filter_landmarks.reset()

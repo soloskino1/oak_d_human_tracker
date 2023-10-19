@@ -37,7 +37,7 @@ class BlazeposeDepthai:
                 stats=True,               
                 internal_fps=None,
                 internal_frame_height=1080,
-                trace=True,
+                trace=False,
                 force_detection=False):
 
         self.pd_model = pd_model if pd_model else POSE_DETECTION_MODEL
