@@ -17,6 +17,7 @@ from BlazeposeDepthaiEdgeModified import BlazeposeDepthai
 from BlazeposeRendererModified import BlazeposeRenderer
 from mediapipe_utils import KEYPOINT_DICT
 from collections import Counter
+from time import sleep
 
 # Function to generate file name to avoid overwriting previous data
 def generate_filename(base_name):
@@ -48,11 +49,15 @@ def rgb_to_name(rgb_color):
             closest_color = name
     return closest_color
 
+buzzer=16 
 # Function to start servo
 def initialize_servo():
+    GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BOARD)
     GPIO.cleanup()
     GPIO.setup(11, GPIO.OUT)
+    GPIO.setup(buzzer,GPIO.OUT)
+    GPIO.output(buzzer,GPIO.LOW)
     servo1 = GPIO.PWM(11, 50) # pin 11 for servo1, pulse 50Hz
     servo1.start(0) # Start PWM running, with value of 0 (pulse off)
     time.sleep(0.5)
@@ -190,6 +195,10 @@ while True:
                         print("Please show your tag for 5 seconds to begin")
                     if started_tracking:
                         print("There is occlusion please show tag")
+                        GPIO.output(buzzer,GPIO.HIGH)
+                        print ("Beep")
+                        sleep(0.5) # Delay in seconds
+                        GPIO.output(buzzer,GPIO.LOW)
                     # Detect AprilTag in the cropped image
                     detected_tags = detector.detect(gray_cropped_img)
                     if len(detected_tags) == 0:
@@ -289,6 +298,7 @@ while True:
     frame = renderer.draw(frame, body, draw_xyz)
     key = renderer.waitKey(delay=1)
     if key == 27 or key == ord('q'):
+        GPIO.output(buzzer,GPIO.LOW)
         servo1.ChangeDutyCycle(7)
         time.sleep(0.5)
         servo1.stop()
